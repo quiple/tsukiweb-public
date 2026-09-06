@@ -1,3 +1,4 @@
+import { waifu2xDownloadUrl } from './orchestrator/external-tools.ts'
 import { displayPath, ensureDir } from '@tsukiweb/common/tools/utils/fs-utils.ts'
 import type { Check, OrchestratorStep } from '@tsukiweb/common/tools/orchestrator/utils.ts'
 import { createSteps } from './orchestrator/pd-steps.ts'
@@ -20,7 +21,6 @@ interface OrchestratorContext {
 
 const DOWNLOAD_URLS = {
   ffmpeg: 'https://www.ffmpeg.org/download.html',
-  waifu2x: 'https://github.com/lltcggie/waifu2x-caffe/releases',
 }
 
 function firstFailure(check: Check): string {
@@ -55,7 +55,7 @@ async function printStatus(statuses: StepStatus[], context: OrchestratorContext)
     },
     tools: [
       { label: 'ffmpeg', configuredValue: context.config.FFMPEG, downloadUrl: DOWNLOAD_URLS.ffmpeg },
-      { label: 'waifu2x', configuredValue: context.config.WAIFU2X_CAFFE, downloadUrl: DOWNLOAD_URLS.waifu2x },
+      { label: 'waifu2x', configuredValue: context.config.WAIFU2X, downloadUrl: waifu2xDownloadUrl(context.config) },
     ],
   })
 

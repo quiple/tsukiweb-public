@@ -1,10 +1,9 @@
+import { externalToolConfig, type ExternalToolConfig, type ExternalToolOverrides } from './external-tools.ts'
 import path from 'path'
 import fs from 'fs/promises'
 import { fileURLToPath, pathToFileURL } from 'url'
 
-export interface ToolConfig {
-  WAIFU2X_CAFFE: string
-  FFMPEG: string
+export interface ToolConfig extends ExternalToolConfig {
   PUBLIC: string
 }
 
@@ -26,12 +25,11 @@ export const REPO_DIR = path.resolve(TOOLS_DIR, '..')
 export const CONFIG_PATH = path.join(TOOLS_DIR, 'my-config.ts')
 
 const DEFAULT_CONFIG: ToolConfig = {
-  WAIFU2X_CAFFE: 'waifu2x-caffe-cui.exe',
-  FFMPEG: 'ffmpeg.exe',
+  ...externalToolConfig(),
   PUBLIC: '../public',
 }
 
-type PartialToolConfig = Partial<ToolConfig>
+type PartialToolConfig = Partial<ToolConfig> & ExternalToolOverrides
 
 function hasCode(error: unknown, code: string): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === code
@@ -55,6 +53,7 @@ export async function loadConfig(): Promise<ToolConfig> {
   return {
     ...DEFAULT_CONFIG,
     ...userConfig,
+    ...externalToolConfig(userConfig),
   }
 }
 

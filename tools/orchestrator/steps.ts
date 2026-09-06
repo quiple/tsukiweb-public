@@ -1,3 +1,4 @@
+import { upscaleImageTree } from './upscale.ts'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -13,7 +14,6 @@ import type { Scene } from '@tsukiweb/common/tools/generate-thumbnails/processor
 import {
   FFMPEG_AUDIO_ARGS,
   SCRIPT_LANGS,
-  WAIFU2X_ARGS,
   thumbConfig,
   x2Config,
   type Paths,
@@ -138,27 +138,8 @@ async function runScripts(paths: Paths): Promise<void> {
 }
 
 async function runWaifu2x(context: StepContext): Promise<void> {
-  const executable = await resolveExecutable(context.config.WAIFU2X_CAFFE, context.paths.tools)
-  const total = (await listFilesRecursive(context.paths.img)).length
-  const updateProgress = async () => {
-    const processed = (await listFilesRecursive(context.paths.imgX2)).length
-    logger.progress(`Upscaling images: ${Math.min(processed, total)}/${total}`)
-  }
-  const args = [
-    '-i', context.paths.img,
-    '-o', context.paths.imgX2,
-    ...WAIFU2X_ARGS,
-  ]
-
-  await updateProgress()
-  const timer = setInterval(() => void updateProgress(), 1000)
-  try {
-    await runCommand(executable.command, args, { cwd: executable.cwd, stdout: 'ignore' })
-  } finally {
-    clearInterval(timer)
-  }
-  await updateProgress()
-  logger.done()
+  const { config, paths } = context
+  await upscaleImageTree(config, paths.tools, paths.img, paths.imgX2)
 }
 
 async function runImageConversion(paths: Paths): Promise<void> {
@@ -271,7 +252,7 @@ export function createSteps(context: StepContext): OrchestratorStep[] {
       id: 3,
       title: 'Upscale images with waifu2x',
       canRun: async () => combine([
-        await executableCheck(config.WAIFU2X_CAFFE, paths.tools),
+        await executableCheck(config.WAIFU2X, paths.tools),
         ...(await imageDirChecks(paths)),
       ]),
       isDone: async () => combine([

@@ -1,3 +1,4 @@
+import { upscaleImageTree } from './upscale.ts'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -9,7 +10,6 @@ import type { Paths, ToolConfig } from './pd-config.ts'
 import {
   FFMPEG_AUDIO_ARGS,
   SCRIPT_LANGS,
-  WAIFU2X_ARGS,
   thumbConfig,
   x2Config,
 } from './config.ts'
@@ -171,28 +171,7 @@ async function processScripts(paths: Paths): Promise<void> {
 
 async function upscaleImages(context: StepContext): Promise<void> {
   const { config, paths } = context
-  const executable = await resolveExecutable(config.WAIFU2X_CAFFE, paths.tools)
-  const total = (await listFilesRecursive(paths.img)).length
-  const updateProgress = async () => {
-    const processed = (await listFilesRecursive(paths.imgX2)).length
-    logger.progress(`Upscaling images: ${Math.min(processed, total)}/${total}`)
-  }
-
-  const args = [
-    '-i', paths.img,
-    '-o', paths.imgX2,
-    ...WAIFU2X_ARGS,
-  ]
-
-  await updateProgress()
-  const timer = setInterval(() => void updateProgress(), 1000)
-  try {
-    await runCommand(executable.command, args, { cwd: executable.cwd, stdout: 'ignore' })
-  } finally {
-    clearInterval(timer)
-  }
-  await updateProgress()
-  logger.done()
+  await upscaleImageTree(config, paths.tools, paths.img, paths.imgX2)
 }
 
 async function runImageConversion(paths: Paths): Promise<void> {
@@ -278,7 +257,7 @@ export function createSteps(context: StepContext): OrchestratorStep[] {
       id: 3,
       title: 'Upscale images with waifu2x',
       canRun: async () => combine([
-        await executableCheck(config.WAIFU2X_CAFFE, paths.tools),
+        await executableCheck(config.WAIFU2X, paths.tools),
         await nonEmptyDirCheck(paths.img),
       ]),
       isDone: async () => combine([

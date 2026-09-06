@@ -40,3 +40,6 @@ tools/arc.nsa
 tools/nscript.dat
 tools/_workspace_pd
 tools/data.xp3
+
+# Optional local waifu2x binary and bundled models
+tools/waifu2x-ncnn-vulkan/

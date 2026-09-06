@@ -1,10 +1,9 @@
+import { externalToolConfig, type ExternalToolConfig, type ExternalToolOverrides } from './external-tools.ts'
 import path from 'path'
 import fs from 'fs/promises'
 import { fileURLToPath, pathToFileURL } from 'url'
 
-export interface ToolConfig {
-  WAIFU2X_CAFFE: string
-  FFMPEG: string
+export interface ToolConfig extends ExternalToolConfig {
   PUBLIC: string
 }
 
@@ -36,15 +35,14 @@ export const REPO_DIR = path.resolve(TOOLS_DIR, '..')
 export const CONFIG_PATH = path.join(TOOLS_DIR, 'my-config.ts')
 
 const DEFAULT_CONFIG: ToolConfig = {
-  WAIFU2X_CAFFE: 'waifu2x-caffe-cui.exe',
-  FFMPEG: 'ffmpeg.exe',
+  ...externalToolConfig(),
   PUBLIC: '../public',
 }
 
 const CD_NAMES = ['CD_original', 'CD_everafter', 'CD_tsukibako'] as const
 type CdName = typeof CD_NAMES[number]
 
-type PartialToolConfig = Partial<ToolConfig>
+type PartialToolConfig = Partial<ToolConfig> & ExternalToolOverrides
 
 export const SCRIPT_LANGS = [
   'jp',
@@ -56,15 +54,6 @@ export const SCRIPT_LANGS = [
   'ru-ciel',
   'zh-tw-yueji_yeren_hanhua_zu',
   'zh-yueji_yeren_hanhua_zu',
-] as const
-
-export const WAIFU2X_ARGS = [
-  '-m', 'noise_scale',
-  '-n', '0',
-  '-s', '2',
-  '-b', '8',
-  '-p', 'cudnn',
-  '-model_dir', 'models-cunet',
 ] as const
 
 export const FFMPEG_AUDIO_ARGS = [
@@ -138,6 +127,7 @@ export async function loadConfig(): Promise<ToolConfig> {
   return {
     ...DEFAULT_CONFIG,
     ...userConfig,
+    ...externalToolConfig(userConfig),
   }
 }
 
